@@ -18,8 +18,8 @@ use App\Form\WorkerType;
 
 class WorkersController extends AbstractController
 {
-    #[Route('/workers/read', name: 'workers_read')]
-    public function getWorkers(ManagerRegistry $managerRegistry): Response
+    #[Route('/workers/read', name: 'workers_read', methods: ['GET', 'HEAD'])]
+    public function read(ManagerRegistry $managerRegistry): Response
     {
         $worker_repo = $managerRegistry->getRepository(Worker::class);
         $workers = $worker_repo->findAll();
@@ -31,7 +31,7 @@ class WorkersController extends AbstractController
     }
 
     #[Route('/workers/create/form', name: 'workers_create_form')]
-    public function createWorkerForm(ManagerRegistry $managerRegistry, Request $request): Response
+    public function createByForm(ManagerRegistry $managerRegistry, Request $request): Response
     {
         $worker = new Worker();
         // Create a form
@@ -55,30 +55,30 @@ class WorkersController extends AbstractController
         ]);
     }
 
-    #[Route('/workers/create', name: 'workers_create')]
-    public function createWorker(ManagerRegistry $managerRegistry, Request $request): Worker
+    #[Route('/workers/create', name: 'workers_create', methods: ['POST'])]
+    public function create(ManagerRegistry $managerRegistry, Request $request): Response
     {
         // get data from request
-        // Process the form data (e.g., save to the database, dispatch a message to a queue, etc.)
-        //TODO pending to insert
-        // Redirect to a success page or render a confirmation message
         if ($request->isMethod('POST')) {
             // Get values directly from the POST request
-            $name = $request->request->get('name');
-            $surname = $request->request->get('surname');
-            $birthdate = $request->request->get('birthdate');
+            $data = json_decode($request->getContent(), true);
+            $name = $data['name'];
+            $surname = $data['surname'];
+            $birthdate = $data['birthdate'];
 
-            // Now you can use these values as needed, 
+            // setting worker object,
             $worker = new Worker();
             $worker->setName($name);
             $worker->setSurname($surname);
             $worker->setBirthdate(new \DateTime($birthdate));
 
+
+            // persist data
             $entityManager = $managerRegistry->getManager();
             $entityManager->persist($worker);
             $entityManager->flush();
         }
-        return $worker;
+        return $this->json($worker);
     }
 
     #[Route('/index', name: 'index')]
